@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Penniless – Global 5s Tap Challenge</title>
+<style>
+  :root{ --bg:#0b1020; --card:#141a31; --ink:#e5e7eb; --muted:#9aa3b2; --accent:#f59e0b; }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;font-family:system-ui,Segoe UI,Inter,Roboto,Arial;
+    background:radial-gradient(1200px 600px at 20% -10%, #1b2240 0%, transparent 60%),
+               radial-gradient(1200px 600px at 120% 110%, #1b2240 0%, transparent 60%), var(--bg);
+    color:var(--ink);display:grid;grid-template-columns:1fr 360px;gap:18px;padding:18px}
+  header{grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;gap:12px;align-items:center}
+  .brand h1{margin:0;font-size:clamp(20px,2.5vw,28px)}
+  .user{display:flex;gap:10px;align-items:center;color:var(--muted)}
+  .btn{border:0;background:linear-gradient(180deg,#fdbb2d,#f59e0b);color:#1a1304;font-weight:700;
+    padding:10px 14px;border-radius:12px;cursor:pointer;box-shadow:0 8px 20px rgba(245,158,11,.25)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  main{background:var(--card);border:1px solid #232b4d;border-radius:18px;padding:22px;
+    display:grid;place-items:center;position:relative;min-height:72vh}
+  .penny-wrap{user-select:none;display:grid;place-items:center;border-radius:999px;padding:12px;transition:transform .06s}
+  .penny{width:min(70vmin,520px);max-width:520px;aspect-ratio:1/1;border-radius:50%;background:#3a2a12;
+    display:grid;place-items:center;position:relative;box-shadow:inset 0 0 0 12px #2a1c07, inset 0 0 0 24px #1d1305, 0 30px 60px rgba(0,0,0,.45)}
+  .penny img{width:90%;height:90%;object-fit:contain;border-radius:50%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));pointer-events:none}
+  .stats{position:absolute;top:18px;left:18px;right:18px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;font-weight:700}
+  .chip{background:#0f1530;border:1px solid #222b57;color:#cbd5e1;padding:8px 12px;border-radius:999px;display:flex;gap:8px;align-items:center;min-width:120px;justify-content:center}
+  .chip b{color:#fff}
+  .tap-hint{position:absolute;bottom:18px;text-align:center;color:var(--muted)}
+  aside{background:var(--card);border:1px solid #232b4d;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px;min-height:72vh;position:sticky;top:18px}
+  h2{margin:0 0 6px 0;font-size:18px}
+  ol{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+  li{background:#0f1530;border:1px solid #222b57;border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center}
+  .rank{background:#1c2449;width:28px;height:28px;display:grid;place-items:center;border-radius:8px;color:#dbe2ff;font-weight:800}
+  .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .score{font-weight:800}
+  .me{outline:2px solid var(--accent);box-shadow:0 0 0 4px rgba(245,158,11,.18) inset}
+  .controls{display:flex;gap:8px}
+  .reset{background:#102b38;color:#93c5fd;border:1px solid #244a5e}
+  .ghost{background:#0f1530;border:1px dashed #33406d;color:#9aa3b2}
+  .modal{position:fixed;inset:0;background:rgba(4,8,20,.72);display:grid;place-items:center;padding:18px}
+  .dialog{background:#111737;border:1px solid #2b3566;border-radius:16px;padding:20px;width:min(460px,92vw);display:flex;flex-direction:column;gap:12px}
+  .dialog h3{margin:0}
+  .field{display:flex;flex-direction:column;gap:6px}
+  input[type="text"]{background:#0b112d;border:1px solid #263165;color:#e5e7eb;padding:12px 14px;border-radius:12px;outline:none}
+  .hidden{display:none!important}
+  @media (max-width:980px){body{grid-template-columns:1fr;padding-bottom:90px}aside{position:static;order:3}}
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#f59e0b" stroke-width="2"/><circle cx="12" cy="12" r="7" stroke="#f59e0b" stroke-width="2"/></svg>
+      <h1>Penniless • 5s Tap Challenge (Global)</h1>
+    </div>
+    <div class="user">
+      <span id="welcome">Not signed in</span>
+      <button id="changeUser" class="btn ghost">Change user</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stats">
+      <div class="chip">Time: <b id="time">5.00</b>s</div>
+      <div class="chip">Taps: <b id="taps">0</b></div>
+      <div class="chip">Best (you): <b id="best">0</b></div>
+    </div>
+    <div class="penny-wrap" id="pennyWrap">
+      <div id="penny" class="penny" role="button" aria-label="Tap the penny!" tabindex="0">
+        <img src="images/penny.png" alt="Penniless coin">
+      </div>
+    </div>
+    <div class="tap-hint">Tap the penny. Timer starts on first tap. Submit to post globally.</div>
+    <div class="controls" style="position:absolute; top:18px; right:18px">
+      <button id="restart" class="btn reset" disabled>Restart</button>
+      <button id="submit" class="btn" disabled>Submit score</button>
+    </div>
+  </main>
+
+  <aside>
+    <h2>🏆 Global Leaderboard (Top 10)</h2>
+    <ol id="board"></ol>
+    <small style="color:var(--muted)">Live updates via Supabase Realtime.</small>
+  </aside>
+
+  <!-- Login modal -->
+  <div id="modal" class="modal">
+    <div class="dialog">
+      <h3>Sign in to play</h3>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" minlength="2" maxlength="20" placeholder="e.g., antonis" autocomplete="nickname" />
+      </div>
+      <button id="login" class="btn">Continue</button>
+    </div>
+  </div>
+
+  <!-- Supabase client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+  (() => {
+    const SUPABASE_URL = "https://lgqggbdevlqmvrgnwljy.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxncWdnYmRldmxxbXZyZ253bGp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0NzAxNzQsImV4cCI6MjA3NDA0NjE3NH0.s3q6Ggb3hmrelVmUG4tQVIe_Luft3S4QYTsRu0tF-NU";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const timeEl=document.getElementById('time'), tapsEl=document.getElementById('taps'), bestEl=document.getElementById('best'), boardEl=document.getElementById('board');
+    const penny=document.getElementById('penny'), pennyWrap=document.getElementById('pennyWrap'), restartBtn=document.getElementById('restart'), submitBtn=document.getElementById('submit');
+    const modal=document.getElementById('modal'), loginBtn=document.getElementById('login'), unameInput=document.getElementById('username'), changeUserBtn=document.getElementById('changeUser'), welcome=document.getElementById('welcome');
+    const LS_USER='penniless_user', LS_BESTS='penniless_bests';
+
+    const getUser=()=>localStorage.getItem(LS_USER);
+    const setUser=(u)=>localStorage.setItem(LS_USER,u);
+    const getBests=()=>JSON.parse(localStorage.getItem(LS_BESTS)||'{}');
+    const setBestFor=(u,s)=>{const b=getBests(); b[u]=Math.max(s,b[u]||0); localStorage.setItem(LS_BESTS,JSON.stringify(b));};
+    const getBestFor=(u)=>(getBests()[u]||0);
+
+    let playing=false, finished=false, taps=0, startTS=null;
+    const GAME_MS=5000;
+    const fmt=(ms)=> (Math.max(0,ms)/1000).toFixed(2);
+    function reset(){playing=false;finished=false;taps=0;startTS=null;tapsEl.textContent='0';timeEl.textContent=fmt(GAME_MS);restartBtn.disabled=true;submitBtn.disabled=true;}
+    function setWelcome(u){welcome.textContent=u?`Signed in as ${u}`:'Not signed in';}
+
+    async function fetchBoard(highlight){
+      const { data, error } = await supabase.from('scores').select('username,best').order('best',{ascending:false}).limit(10);
+      if(error) return console.error(error);
+      boardEl.innerHTML='';
+      (data||[]).forEach((e,i)=>{
+        const li=document.createElement('li');
+        if(highlight && e.username===highlight) li.classList.add('me');
+        li.innerHTML=`<div class="rank">${i+1}</div><div class="name">${e.username}</div><div class="score">${e.best}</div>`;
+        boardEl.appendChild(li);
+      });
+    }
+    supabase.channel('scores-changes').on('postgres_changes',{event:'*',schema:'public',table:'scores'},()=>fetchBoard(getUser())).subscribe();
+    async function postBest(u,s){await supabase.rpc('set_best',{p_username:u,p_score:s});}
+
+    function ensureUser(){const u=getUser();if(u){modal.classList.add('hidden');setWelcome(u);bestEl.textContent=getBestFor(u);fetchBoard(u);}else{modal.classList.remove('hidden');unameInput.focus();}}
+
+    function tick(){if(!playing)return;const left=Math.max(0,GAME_MS-(performance.now()-startTS));timeEl.textContent=fmt(left);if(left<=0){playing=false;finished=true;restartBtn.disabled=false;submitBtn.disabled=false;return;}requestAnimationFrame(tick);}
+    ['pointerdown','keydown'].forEach(evt=>{penny.addEventListener(evt,e=>{if(evt==='keydown'&&!(e.key===' '||e.key==='Enter'))return;e.preventDefault();const u=getUser();if(!u){modal.classList.remove('hidden');return;}if(!playing&&!finished){playing=true;startTS=performance.now();requestAnimationFrame(tick);}if(!playing)return;taps++;tapsEl.textContent=String(taps);pennyWrap.style.transform='scale(0.97)';setTimeout(()=>pennyWrap.style.transform='scale(1)',50);},{passive:false});});
+    restartBtn.addEventListener('click',reset);
+    submitBtn.addEventListener('click',async()=>{if(!finished)return;const u=getUser();if(!u)return;setBestFor(u,taps);bestEl.textContent=getBestFor(u);submitBtn.disabled=true;await postBest(u,taps);fetchBoard(u);});
+    loginBtn.addEventListener('click',()=>{const v=unameInput.value.trim().slice(0,20);if(v.length<2){unameInput.focus();return;}setUser(v);modal.classList.add('hidden');setWelcome(v);bestEl.textContent=getBestFor(v);fetchBoard(v);});
+    changeUserBtn.addEventListener('click',()=>{modal.classList.remove('hidden');unameInput.value='';unameInput.focus();});
+    reset(); ensureUser();
+  })();
+  </script>
+</body>
+</html>
