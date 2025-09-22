@@ -11,7 +11,7 @@
     background:radial-gradient(1200px 600px at 20% -10%, #1b2240 0%, transparent 60%),
                radial-gradient(1200px 600px at 120% 110%, #1b2240 0%, transparent 60%), var(--bg);
     color:var(--ink);display:grid;grid-template-columns:1fr 360px;gap:18px;padding:18px}
-  header{grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between}
+  header{grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;gap:16px}
   .brand{display:flex;gap:12px;align-items:center}
   .brand h1{margin:0;font-size:clamp(20px,2.5vw,28px)}
   .user{display:flex;gap:10px;align-items:center;color:var(--muted)}
@@ -46,6 +46,18 @@
   input[type="text"]{background:#0b112d;border:1px solid #263165;color:#e5e7eb;padding:12px 14px;border-radius:12px;outline:none}
   .hidden{display:none!important}
   @media (max-width:980px){body{grid-template-columns:1fr;padding-bottom:90px}aside{position:static;order:3}}
+
+  /* Tabs */
+  .tabs{display:flex;gap:8px;align-items:center}
+  .tab{background:#0f1530;color:#cbd5e1;border:1px solid #33406d;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
+  .tab.active{background:linear-gradient(180deg,#fdbb2d,#f59e0b);color:#1a1304;border-color:#f59e0b}
+
+  /* Roadmap styles */
+  .roadmap{background:var(--card);border:1px solid #232b4d;border-radius:18px;padding:22px;min-height:72vh;display:flex;flex-direction:column;gap:14px}
+  .rm-hero{display:flex;gap:14px;align-items:center}
+  .rm-badge{display:inline-flex;gap:8px;align-items:center;background:#0f1530;border:1px solid #33406d;padding:8px 12px;border-radius:999px;font-weight:800}
+  .rm-list{display:grid;gap:10px;margin-top:6px}
+  .rm-item{background:#0f1530;border:1px solid #222b57;border-radius:12px;padding:12px 14px}
 </style>
 </head>
 <body>
@@ -54,13 +66,18 @@
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#f59e0b" stroke-width="2"/><circle cx="12" cy="12" r="7" stroke="#f59e0b" stroke-width="2"/></svg>
       <h1>Penniless • 5s Tap Challenge (Global)</h1>
     </div>
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button id="tabPlay" class="tab" role="tab" aria-controls="sectionPlay" aria-selected="false">Play</button>
+      <button id="tabRoadmap" class="tab active" role="tab" aria-controls="sectionRoadmap" aria-selected="true">Roadmap</button>
+    </div>
     <div class="user">
       <span id="welcome">Not signed in</span>
       <button id="changeUser" class="btn ghost">Change user</button>
     </div>
   </header>
 
-  <main>
+  <!-- PLAY VIEW -->
+  <main id="sectionPlay" data-tab="play" class="hidden" role="tabpanel" aria-labelledby="tabPlay">
     <div class="stats">
       <div class="chip">Time: <b id="time">5.00</b>s</div>
       <div class="chip">Taps: <b id="taps">0</b></div>
@@ -78,11 +95,47 @@
     </div>
   </main>
 
-  <aside>
+  <aside id="asidePlay" data-tab="play" class="hidden" aria-hidden="true">
     <h2>🏆 Global Leaderboard (Top 10)</h2>
+    <div class="chip" id="liveMode" aria-live="polite" style="justify-content:flex-start;min-width:auto;width:max-content">Live: …</div>
     <ol id="board"></ol>
-    <small style="color:var(--muted)">Live updates via Supabase Realtime.</small>
+    <small style="color:var(--muted)">Live updates via Supabase Realtime when available; otherwise auto‑refresh polling.</small>
   </aside>
+
+  <!-- ROADMAP VIEW -->
+  <section id="sectionRoadmap" data-tab="roadmap" class="roadmap" role="tabpanel" aria-labelledby="tabRoadmap">
+    <div class="rm-hero">
+      <span class="rm-badge">🗺️ Roadmap</span>
+      <span style="color:var(--muted)">What we're building & how rewards work</span>
+    </div>
+
+    <div class="rm-item" style="border-color:#f59e0b">
+      <strong>🎁 Solana Giveaways — Every 30 Minutes</strong>
+      <p style="margin:.4rem 0 0; color:#cbd5e1">
+        We will give away <strong>SOL</strong> from the <em>global fees</em> to the <strong>top 3</strong> players on the Global Leaderboard <strong>every 30 minutes</strong>.
+        Keep tapping, climb the board, and watch for the payout windows.
+      </p>
+    </div>
+
+    <div class="rm-list">
+      <div class="rm-item">
+        <strong>Phase 1 — Global 5s Tap</strong>
+        <p style="margin:.4rem 0 0; color:#cbd5e1">Core game, public leaderboard, and real-time updates via Supabase.</p>
+      </div>
+      <div class="rm-item">
+        <strong>Phase 2 — Anti-cheat & Verified Accounts</strong>
+        <p style="margin:.4rem 0 0; color:#cbd5e1">Device checks, rate limiting, and optional wallet verification.</p>
+      </div>
+      <div class="rm-item">
+        <strong>Phase 3 — On-chain Rewards</strong>
+        <p style="margin:.4rem 0 0; color:#cbd5e1">Automated SOL distribution sourced from global fees.</p>
+      </div>
+    </div>
+
+    <p class="rm-item" style="opacity:.85">
+      <small>Note: The giveaways are promotional and may change as the project evolves. Final eligibility and details will be announced in-app and on socials.</small>
+    </p>
+  </section>
 
   <!-- Login modal -->
   <div id="modal" class="modal">
@@ -107,7 +160,11 @@
     const timeEl=document.getElementById('time'), tapsEl=document.getElementById('taps'), bestEl=document.getElementById('best'), boardEl=document.getElementById('board');
     const penny=document.getElementById('penny'), pennyWrap=document.getElementById('pennyWrap'), restartBtn=document.getElementById('restart'), submitBtn=document.getElementById('submit');
     const modal=document.getElementById('modal'), loginBtn=document.getElementById('login'), unameInput=document.getElementById('username'), changeUserBtn=document.getElementById('changeUser'), welcome=document.getElementById('welcome');
-    const LS_USER='penniless_user', LS_BESTS='penniless_bests';
+    const tabPlay=document.getElementById('tabPlay'), tabRoadmap=document.getElementById('tabRoadmap');
+    const sectionPlay=document.getElementById('sectionPlay'), asidePlay=document.getElementById('asidePlay'), sectionRoadmap=document.getElementById('sectionRoadmap');
+    const liveMode=document.getElementById('liveMode');
+
+    const LS_USER='penniless_user', LS_BESTS='penniless_bests', LS_MOCK='penniless_mock_board';
 
     const getUser=()=>localStorage.getItem(LS_USER);
     const setUser=(u)=>localStorage.setItem(LS_USER,u);
@@ -115,15 +172,21 @@
     const setBestFor=(u,s)=>{const b=getBests(); b[u]=Math.max(s,b[u]||0); localStorage.setItem(LS_BESTS,JSON.stringify(b));};
     const getBestFor=(u)=>(getBests()[u]||0);
 
-    let playing=false, finished=false, taps=0, startTS=null;
-    const GAME_MS=5000;
-    const fmt=(ms)=> (Math.max(0,ms)/1000).toFixed(2);
-    function reset(){playing=false;finished=false;taps=0;startTS=null;tapsEl.textContent='0';timeEl.textContent=fmt(GAME_MS);restartBtn.disabled=true;submitBtn.disabled=true;}
-    function setWelcome(u){welcome.textContent=u?`Signed in as ${u}`:'Not signed in';}
+    // --- Mock leaderboard helpers (fallback when network/WebSocket not available) ---
+    function getMockBoard(){
+      const raw = JSON.parse(localStorage.getItem(LS_MOCK) || '[]');
+      return raw.sort((a,b)=> (b.best||0)-(a.best||0)).slice(0,10);
+    }
+    function saveMockScore(username, score){
+      const board = JSON.parse(localStorage.getItem(LS_MOCK) || '[]');
+      const idx = board.findIndex(x=>x.username===username);
+      if(idx>-1){ board[idx].best = Math.max(board[idx].best||0, score); }
+      else{ board.push({username, best: score}); }
+      localStorage.setItem(LS_MOCK, JSON.stringify(board));
+    }
 
-    async function fetchBoard(highlight){
-      const { data, error } = await supabase.from('scores').select('username,best').order('best',{ascending:false}).limit(10);
-      if(error) return console.error(error);
+    // --- Rendering ---
+    function renderBoard(data, highlight){
       boardEl.innerHTML='';
       (data||[]).forEach((e,i)=>{
         const li=document.createElement('li');
@@ -132,18 +195,167 @@
         boardEl.appendChild(li);
       });
     }
-    supabase.channel('scores-changes').on('postgres_changes',{event:'*',schema:'public',table:'scores'},()=>fetchBoard(getUser())).subscribe();
-    async function postBest(u,s){await supabase.rpc('set_best',{p_username:u,p_score:s});}
 
-    function ensureUser(){const u=getUser();if(u){modal.classList.add('hidden');setWelcome(u);bestEl.textContent=getBestFor(u);fetchBoard(u);}else{modal.classList.remove('hidden');unameInput.focus();}}
+    // --- Data fetch with graceful fallback ---
+    async function fetchBoard(highlight){
+      try{
+        const { data, error } = await supabase
+          .from('scores')
+          .select('username,best')
+          .order('best',{ascending:false})
+          .limit(10);
+        if(error) throw error;
+        renderBoard(data, highlight);
+        return true;
+      }catch(err){
+        console.warn('[board] Using mock fallback:', err?.message||err);
+        renderBoard(getMockBoard(), highlight);
+        return false;
+      }
+    }
 
-    function tick(){if(!playing)return;const left=Math.max(0,GAME_MS-(performance.now()-startTS));timeEl.textContent=fmt(left);if(left<=0){playing=false;finished=true;restartBtn.disabled=false;submitBtn.disabled=false;return;}requestAnimationFrame(tick);}
-    ['pointerdown','keydown'].forEach(evt=>{penny.addEventListener(evt,e=>{if(evt==='keydown'&&!(e.key===' '||e.key==='Enter'))return;e.preventDefault();const u=getUser();if(!u){modal.classList.remove('hidden');return;}if(!playing&&!finished){playing=true;startTS=performance.now();requestAnimationFrame(tick);}if(!playing)return;taps++;tapsEl.textContent=String(taps);pennyWrap.style.transform='scale(0.97)';setTimeout(()=>pennyWrap.style.transform='scale(1)',50);},{passive:false});});
+    async function postBest(u,s){
+      try{
+        await supabase.rpc('set_best',{p_username:u,p_score:s});
+      }catch(err){
+        console.warn('[postBest] Offline/mock fallback:', err?.message||err);
+        saveMockScore(u,s);
+      }
+    }
+
+    function setLive(mode){
+      if(!liveMode) return;
+      liveMode.textContent = mode==='realtime' ? 'Live: Realtime' : 'Live: Polling';
+    }
+
+    let pollHandle=null;
+    async function startPolling(){
+      clearInterval(pollHandle);
+      setLive('polling');
+      await fetchBoard(getUser());
+      pollHandle = setInterval(()=>fetchBoard(getUser()), 15000);
+    }
+
+    function stopPolling(){ if(pollHandle){ clearInterval(pollHandle); pollHandle=null; } }
+
+    function canUseRealtime(){
+      // WebSocket must exist and not be intentionally disabled by the environment
+      return typeof WebSocket !== 'undefined';
+    }
+
+    function startRealtime(){
+      try{
+        const channel = supabase.channel('scores-changes');
+        channel.on('postgres_changes',{event:'*',schema:'public',table:'scores'},()=>fetchBoard(getUser()));
+        channel.subscribe((status)=>{
+          if(status==='SUBSCRIBED'){
+            stopPolling();
+            setLive('realtime');
+          }
+        });
+        window.addEventListener('beforeunload',()=>{ try{ channel.unsubscribe(); }catch(_){} });
+      }catch(err){
+        console.warn('[realtime] Disabled, falling back to polling:', err?.message||err);
+        startPolling();
+      }
+    }
+
+    // --- Game logic ---
+    let playing=false, finished=false, taps=0, startTS=null;
+    const GAME_MS=5000;
+    const fmt=(ms)=> (Math.max(0,ms)/1000).toFixed(2);
+    function reset(){playing=false;finished=false;taps=0;startTS=null;tapsEl.textContent='0';timeEl.textContent=fmt(GAME_MS);restartBtn.disabled=true;submitBtn.disabled=true;}
+    function setWelcome(u){welcome.textContent=u?`Signed in as ${u}`:'Not signed in';}
+
+    function ensureUser(){
+      const u=getUser();
+      if(u){
+        modal.classList.add('hidden');
+        setWelcome(u);
+        bestEl.textContent=getBestFor(u);
+        fetchBoard(u);
+      }else{
+        modal.classList.remove('hidden');
+        unameInput.focus();
+      }
+    }
+
+    function tick(){
+      if(!playing) return;
+      const left=Math.max(0,GAME_MS-(performance.now()-startTS));
+      timeEl.textContent=fmt(left);
+      if(left<=0){ playing=false; finished=true; restartBtn.disabled=false; submitBtn.disabled=false; return; }
+      requestAnimationFrame(tick);
+    }
+
+    ['pointerdown','keydown'].forEach(evt=>{
+      penny.addEventListener(evt,e=>{
+        if(evt==='keydown'&&!(e.key===' '||e.key==='Enter')) return;
+        e.preventDefault();
+        const u=getUser();
+        if(!u){ modal.classList.remove('hidden'); return; }
+        if(!playing&&!finished){ playing=true; startTS=performance.now(); requestAnimationFrame(tick); }
+        if(!playing) return;
+        taps++; tapsEl.textContent=String(taps);
+        pennyWrap.style.transform='scale(0.97)'; setTimeout(()=>pennyWrap.style.transform='scale(1)',50);
+      },{passive:false});
+    });
+
     restartBtn.addEventListener('click',reset);
-    submitBtn.addEventListener('click',async()=>{if(!finished)return;const u=getUser();if(!u)return;setBestFor(u,taps);bestEl.textContent=getBestFor(u);submitBtn.disabled=true;await postBest(u,taps);fetchBoard(u);});
-    loginBtn.addEventListener('click',()=>{const v=unameInput.value.trim().slice(0,20);if(v.length<2){unameInput.focus();return;}setUser(v);modal.classList.add('hidden');setWelcome(v);bestEl.textContent=getBestFor(v);fetchBoard(v);});
-    changeUserBtn.addEventListener('click',()=>{modal.classList.remove('hidden');unameInput.value='';unameInput.focus();});
-    reset(); ensureUser();
+    submitBtn.addEventListener('click',async()=>{
+      if(!finished) return;
+      const u=getUser(); if(!u) return;
+      setBestFor(u,taps); bestEl.textContent=getBestFor(u);
+      submitBtn.disabled=true;
+      await postBest(u,taps);
+      fetchBoard(u);
+    });
+
+    loginBtn.addEventListener('click',()=>{
+      const v=unameInput.value.trim().slice(0,20);
+      if(v.length<2){ unameInput.focus(); return; }
+      setUser(v);
+      modal.classList.add('hidden');
+      setWelcome(v);
+      bestEl.textContent=getBestFor(v);
+      fetchBoard(v);
+    });
+
+    changeUserBtn.addEventListener('click',()=>{ modal.classList.remove('hidden'); unameInput.value=''; unameInput.focus(); });
+
+    // Tabs logic
+    function showTab(name){
+      const isPlay = name==='play';
+      [sectionPlay, asidePlay].forEach(el=>el.classList.toggle('hidden', !isPlay));
+      sectionPlay.setAttribute('aria-hidden', (!isPlay).toString());
+      asidePlay.setAttribute('aria-hidden', (!isPlay).toString());
+      sectionRoadmap.classList.toggle('hidden', isPlay);
+      tabPlay.classList.toggle('active', isPlay); tabPlay.setAttribute('aria-selected', isPlay.toString());
+      tabRoadmap.classList.toggle('active', !isPlay); tabRoadmap.setAttribute('aria-selected', (!isPlay).toString());
+      if(isPlay) fetchBoard(getUser());
+    }
+    tabPlay.addEventListener('click',()=>showTab('play'));
+    tabRoadmap.addEventListener('click',()=>showTab('roadmap'));
+
+    // --- Init ---
+    reset(); ensureUser(); showTab('roadmap');
+    if(canUseRealtime()) startRealtime(); else startPolling();
+
+    // --- Minimal self-tests (console) ---
+    (function runTests(){
+      function assert(name, cond){ console[(cond?'log':'error')]( (cond?'✅':'❌')+' '+name ); }
+      // Test 1: time formatter
+      assert('fmt(5000) -> "5.00"', fmt(5000)==='5.00');
+      // Test 2: best score storage keeps max
+      const tmpUser='__test_user__'; setBestFor(tmpUser, 5); setBestFor(tmpUser, 3); assert('best stays at max', getBestFor(tmpUser)===5);
+      // Test 3: mock board sort desc
+      saveMockScore('__a__', 10); saveMockScore('__b__', 20); const m=getMockBoard(); assert('mock sorted desc', m.length && m[0].best>=m[m.length-1].best);
+      // Test 4: tabs ARIA sync
+      showTab('play'); const ariaOk = sectionPlay.getAttribute('aria-hidden')==='false' && asidePlay.getAttribute('aria-hidden')==='false' && tabPlay.getAttribute('aria-selected')==='true';
+      assert('tabs aria sync', ariaOk);
+      // Cleanup test artefacts
+      const b=getBests(); delete b[tmpUser]; localStorage.setItem(LS_BESTS, JSON.stringify(b));
+    })();
   })();
   </script>
 </body>
